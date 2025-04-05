@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Data</title>
+</head>
+<body>
+    <h1>Browser Data</h1>
+
+    <h2>Extensions</h2>
+    <ul>
+        {% for ext in extensions.extensions %}
+            <li>{{ ext }}</li>
+        {% empty %}
+            <li>No extensions found. {% if extensions.error %}Error: {{ extensions.error }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Profile</h2>
+    <pre>{{ profile.profile|json_script:"profile-data" }}</pre>
+
+    <h2>Autofill</h2>
+    <ul>
+        {% for item in autofill.autofill %}
+            <li>{{ item.name }}: {{ item.value }}</li>
+        {% empty %}
+            <li>No autofill data. {% if autofill.error %}Error: {{ autofill.error }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Downloads</h2>
+    <ul>
+        {% for download in downloads.downloads %}
+            <li>File: {{ download.file_path }} (From: {{ download.source_url }})</li>
+        {% empty %}
+            <li>No downloads found. {% if downloads.error %}Error: {{ downloads.error }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Passwords</h2>
+    <ul>
+        {% for pwd in passwords.passwords %}
+            <li>URL: {{ pwd.url }} | Username: {{ pwd.username }} | Password: {{ pwd.password }}</li>
+        {% empty %}
+            <li>No passwords found. {% if passwords.error %}Error: {{ passwords.error }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Bookmarks</h2>
+    <pre>{{ bookmarks.bookmarks|json_script:"bookmarks-data" }}</pre>
+
+    <h2>Browsing History (Last 10)</h2>
+    <ul>
+        {% for entry in history.history %}
+            <li>{{ entry.title }}: {{ entry.url }} (Visited: {{ entry.last_visit }})</li>
+        {% empty %}
+            <li>No history found. {% if history.error %}Error: {{ history.error }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

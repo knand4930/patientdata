@@ -1,0 +1,9 @@
+<h2>Browser Info</h2>
+<p>User Agent: {{ user_agent }}</p>
+<p>IP Address: {{ ip_address }}</p>
+<h3>Cookies</h3>
+<ul>
+  {% for key, value in cookies.items %}
+    <li>{{ key }}: {{ value }}</li>
+  {% endfor %}
+</ul>

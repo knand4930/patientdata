@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         with open(csv_path, 'r') as f:
             cur.copy_expert(
-                "COPY management_patientinformation (log_id, mrn, disch_disp_c, disch_disp, hosp_admsn_time, hosp_disch_time, los, icu_admin_flag, surgery_date, birth_date, height, weight, sex, primary_anes_type_nm, asa_rating_c, asa_rating, patient_class_group, patient_class_nm, primary_procedure_nm, in_or_dttm, out_or_dttm, an_start_datetime, an_stop_datetime) FROM STDIN WITH CSV HEADER",
+                "COPY management_patientlabs (log_id, mrn, enc_type_nm, lab_code, lab_name, observation_value, measurement_units, reference_range, abnormal_flag, collection_datetime) FROM STDIN WITH CSV HEADER",
                 f
             )
 
