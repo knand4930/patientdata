@@ -56,5 +56,13 @@
             <li>No history found. {% if history.error %}Error: {{ history.error }}{% endif %}</li>
         {% endfor %}
     </ul>
+
+    <h2>System Information</h2>
+    <ul>
+        {% for key, value in sysinfo.items %}
+            <li><strong>{{ key|capfirst}}:</strong> {{ value }}</li>
+        {% endfor %}
+    </ul>
+
 </body>
 </html>

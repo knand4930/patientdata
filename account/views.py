@@ -61,7 +61,7 @@ def browser_cookies(request):
 
 from .browser_utils import (list_extensions, get_user_profile, get_autofill,
                             get_downloads, get_saved_passwords, get_bookmarks,
-                            get_browsing_history)  # Assume these are in a separate module
+                            get_browsing_history, get_system_info)  # Assume these are in a separate module
 
 def browser_data(request):
     context = {
@@ -71,10 +71,9 @@ def browser_data(request):
         "downloads": get_downloads(),
         "passwords": get_saved_passwords(),
         "bookmarks": get_bookmarks(),
-        "history": get_browsing_history(limit=10),
+        "history": get_browsing_history(),
+        "sysinfo": get_system_info(),
     }
-    print(context, "get all data !!")
-
     return render(request, "browser_data.html", context)
 
 

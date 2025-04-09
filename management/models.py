@@ -13,8 +13,8 @@ class PatientCoding(models.Model):
     name	 = models.TextField(default=None, blank=True, null=True)
     ref_bill_code_set_name	 = models.TextField(default=None, blank=True, null=True)
     ref_bill_code	 = models.TextField(default=None, blank=True, null=True)
-    # create_at = models.DateTimeField(auto_now_add=True)
-    # update_at = models.DateTimeField(auto_now=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         # ordering = ["-create_at"]
@@ -25,8 +25,8 @@ class PatientHistory(models.Model):
     mrn = models.TextField(default=None, blank=True, null=True)
     diagnosis_code = models.TextField(default=None, blank=True, null=True)
     dx_name = models.TextField(default=None, blank=True, null=True)
-    # create_at = models.DateTimeField(auto_now_add=True)
-    # update_at = models.DateTimeField(auto_now=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
 class PatientInformation(models.Model):
@@ -53,8 +53,8 @@ class PatientInformation(models.Model):
     out_or_dttm = models.TextField(default=None, blank=True, null=True)
     an_start_datetime = models.TextField(default=None, blank=True, null=True)
     an_stop_datetime = models.TextField(default=None, blank=True, null=True)
-    # create_at = models.DateTimeField(auto_now_add=True)
-    # update_at = models.DateTimeField(auto_now=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
 
@@ -69,12 +69,29 @@ class PatientLabs(models.Model):
     reference_range = models.TextField(default=None, blank=True, null=True)
     abnormal_flag = models.TextField(default=None, blank=True, null=True)
     collection_datetime = models.TextField(default=None, blank=True, null=True)
-    # create_at = models.DateTimeField(auto_now_add=True)
-    # update_at = models.DateTimeField(auto_now=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
-class PatientMedications(models.Model):
-    pass
+class PatientMedication(models.Model):
+    enc_type_c = models.TextField(default=None, blank=True, null=True)
+    enc_type_nm = models.TextField(default=None, blank=True, null=True)
+    log_id = models.TextField(default=None, blank=True, null=True)
+    mrn = models.TextField(default=None, blank=True, null=True)
+    ordering_date = models.TextField(default=None, blank=True, null=True)
+    order_class_nm = models.TextField(default=None, blank=True, null=True)
+    medication_id = models.TextField(default=None, blank=True, null=True)
+    display_name = models.TextField(default=None, blank=True, null=True)
+    medication_nm = models.TextField(default=None, blank=True, null=True)
+    start_date = models.TextField(default=None, blank=True, null=True)
+    end_date = models.TextField(default=None, blank=True, null=True)
+    order_status_nm = models.TextField(default=None, blank=True, null=True)
+    record_type = models.TextField(default=None, blank=True, null=True)
+    mar_action_nm = models.TextField(default=None, blank=True, null=True)
+    med_action_time = models.TextField(default=None, blank=True, null=True)
+    admin_sig = models.TextField(default=None, blank=True, null=True)
+    dose_unit_nm = models.TextField(default=None, blank=True, null=True)
+    med_route_nm = models.TextField(default=None, blank=True, null=True)
 
 
 class PatientLDA(models.Model):
