@@ -13,8 +13,6 @@ class PatientCoding(models.Model):
     name	 = models.TextField(default=None, blank=True, null=True)
     ref_bill_code_set_name	 = models.TextField(default=None, blank=True, null=True)
     ref_bill_code	 = models.TextField(default=None, blank=True, null=True)
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         # ordering = ["-create_at"]
@@ -25,8 +23,7 @@ class PatientHistory(models.Model):
     mrn = models.TextField(default=None, blank=True, null=True)
     diagnosis_code = models.TextField(default=None, blank=True, null=True)
     dx_name = models.TextField(default=None, blank=True, null=True)
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
+
 
 
 class PatientInformation(models.Model):
@@ -53,8 +50,6 @@ class PatientInformation(models.Model):
     out_or_dttm = models.TextField(default=None, blank=True, null=True)
     an_start_datetime = models.TextField(default=None, blank=True, null=True)
     an_stop_datetime = models.TextField(default=None, blank=True, null=True)
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
 
 
@@ -69,8 +64,6 @@ class PatientLabs(models.Model):
     reference_range = models.TextField(default=None, blank=True, null=True)
     abnormal_flag = models.TextField(default=None, blank=True, null=True)
     collection_datetime = models.TextField(default=None, blank=True, null=True)
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
 
 class PatientMedication(models.Model):

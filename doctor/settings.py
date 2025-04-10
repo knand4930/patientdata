@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "account",
     "management",
-
+    'import_export',
 ]
 
 MIDDLEWARE = [
