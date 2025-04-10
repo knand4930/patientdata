@@ -48,3 +48,9 @@ class PatientVisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientVisit
         fields = "__all__"
+
+
+class PatientMedicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientMedication
+        fields = "__all__"

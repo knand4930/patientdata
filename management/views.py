@@ -8,12 +8,12 @@ from rest_framework.views import APIView
 
 from .filter import PatientCodingFilterSet, PatientProcedureEventsFilterSet, PatientVisitFilterSet, \
     PatientPostOPComplicationsFilterSet, PatientLDAFilterSet, PatientLabsFilterSet, PatientInformationFilterSet, \
-    PatientHistoryFilterSet
+    PatientHistoryFilterSet, PatientMedicationFilterSet
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
 from .serializer import PatientCodingSerializer, PatientHistorySerializer, PatientInformationSerializer, \
     PatientLabsSerializer, PatientLDASerializer, PatientPostOPComplicationsSerializer, PatientProcedureEventsSerializer, \
-    PatientVisitSerializer
+    PatientVisitSerializer, PatientMedicationSerializer
 from rest_framework import status
 from rest_framework.response import Response
 # Create your views here.
@@ -125,3 +125,11 @@ class PatientVisitListAPIView(ListAPIView):
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
     filterset_class = PatientVisitFilterSet
+
+class PatientMedicationListAPIView(ListAPIView):
+    permission_classes = (AllowAny, )
+    queryset = PatientMedication.objects.all()
+    serializer_class = PatientMedicationSerializer
+    filter_backends = [DjangoFilterBackend]
+    pagination_class = CustomPagination
+    filterset_class = PatientMedicationFilterSet

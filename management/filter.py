@@ -1,5 +1,5 @@
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
 import django_filters
 
 
@@ -55,4 +55,11 @@ class PatientVisitFilterSet(django_filters.FilterSet):
     log_id = django_filters.CharFilter(field_name="log_id")
     class Meta:
         model = PatientVisit
+        fields = ["mrn", "log_id"]
+
+class PatientMedicationFilterSet(django_filters.FilterSet):
+    mrn = django_filters.CharFilter(field_name="mrn")
+    log_id = django_filters.CharFilter(field_name="log_id")
+    class Meta:
+        model = PatientMedication
         fields = ["mrn", "log_id"]
