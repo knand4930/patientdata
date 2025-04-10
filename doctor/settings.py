@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     "account",
     "management",
     'import_export',
+    'django_filters',
+
 ]
 
 MIDDLEWARE = [
