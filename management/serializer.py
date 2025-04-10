@@ -1,5 +1,5 @@
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
 from rest_framework import serializers
 
 class PatientCodingSerializer(serializers.ModelSerializer):
