@@ -64,7 +64,7 @@ class FilterAPIDataAPIView(APIView):
 
 class PatientCodingListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientCoding.objects.all()
+    queryset = PatientCoding.objects.all().order_by('id')
     serializer_class = PatientCodingSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -72,7 +72,7 @@ class PatientCodingListAPIView(ListAPIView):
 
 class PatientHistoryListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientHistory.objects.all()
+    queryset = PatientHistory.objects.all().order_by('id')
     serializer_class = PatientHistorySerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -80,7 +80,7 @@ class PatientHistoryListAPIView(ListAPIView):
 
 class PatientInformationListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientInformation.objects.all()
+    queryset = PatientInformation.objects.all().order_by('id')
     serializer_class = PatientInformationSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -88,7 +88,7 @@ class PatientInformationListAPIView(ListAPIView):
 
 class PatientLabsListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientLabs.objects.all()
+    queryset = PatientLabs.objects.all().order_by('id')
     serializer_class = PatientLabsSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -96,7 +96,7 @@ class PatientLabsListAPIView(ListAPIView):
 
 class PatientLDAListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientLDA.objects.all()
+    queryset = PatientLDA.objects.all().order_by('id')
     serializer_class = PatientLDASerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -104,7 +104,7 @@ class PatientLDAListAPIView(ListAPIView):
 
 class PatientPostOPComplicationsListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientPostOPComplications.objects.all()
+    queryset = PatientPostOPComplications.objects.all().order_by('id')
     serializer_class = PatientPostOPComplicationsSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -112,7 +112,7 @@ class PatientPostOPComplicationsListAPIView(ListAPIView):
 
 class PatientProcedureEventsListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientProcedureEvents.objects.all()
+    queryset = PatientProcedureEvents.objects.all().order_by('id')
     serializer_class = PatientProcedureEventsSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -120,7 +120,7 @@ class PatientProcedureEventsListAPIView(ListAPIView):
 
 class PatientVisitListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientVisit.objects.all()
+    queryset = PatientVisit.objects.all().order_by('id')
     serializer_class = PatientVisitSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
@@ -128,7 +128,7 @@ class PatientVisitListAPIView(ListAPIView):
 
 class PatientMedicationListAPIView(ListAPIView):
     permission_classes = (AllowAny, )
-    queryset = PatientMedication.objects.all()
+    queryset = PatientMedication.objects.all().order_by('id')
     serializer_class = PatientMedicationSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination

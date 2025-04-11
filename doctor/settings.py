@@ -232,3 +232,40 @@ DJOSER = {
         'password_changed_confirmation': 'account.email.PasswordChangedConfirmationEmail',
     },
 }
+
+
+
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS').split(',')
+
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', cast=bool)
+CORS_ORIGIN_ALLOW_ALL = config('CORS_ORIGIN_ALLOW_ALL', cast=bool)
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', cast=bool)
+CORS_ALLOW_ALL_HEADERS = config('CORS_ALLOW_ALL_HEADERS', cast=bool)
+CORS_ORIGIN_WHITELIST = os.environ.get('CORS_ORIGIN_WHITELIST').split(',')
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS').split(',')
+CORS_ALLOW_ALL_SUBDOMAINS = config('CORS_ALLOW_ALL_SUBDOMAINS', cast=bool)
+CORS_ALLOW_WILDCARD = config('CORS_ALLOW_WILDCARD', cast=bool)
+
+CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+.dirhamperfoot.ae", ]
+CORS_ALLOWED_HOSTS = ['https://dirhamperfoot.com']
+CORS_ALLOWED_HEADERS = ['Authorization', 'Content-Type']
+
+CORS_EXPOSE_HEADERS = [
+    'Set-Cookie',
+    # 'X-Custom-Header',
+]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'OPTIONS',
+    'PATCH',
+]
+
+CORS_ALLOW_HEADERS = [
+    'Authorization',
+    'Content-Type',
+    'Custom-Header',
+]
