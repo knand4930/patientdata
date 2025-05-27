@@ -539,11 +539,11 @@ class SQLMRNFilterListAPIView(APIView):
         log_id = request.GET.get("log_id")
 
         # Generate cache key
-        cache_key = f"mrn_filter:{mrn}:{log_id}"
+        cache_key = f"mrn_filter:{mrn or 'none'}:{log_id or 'none'}:{'no_filter' if not mrn and not log_id else 'filtered'}"
 
-        # Try quick cache first (local memory)
-        quick_cache = caches['quick']
+        # Try quick cache (local memory)
         try:
+            quick_cache = caches['quick']
             cached_data = quick_cache.get(cache_key)
             if cached_data:
                 logger.debug(f"Cache hit (quick): {cache_key}")
@@ -551,25 +551,22 @@ class SQLMRNFilterListAPIView(APIView):
         except Exception as e:
             logger.warning(f"Quick cache error: {e}")
 
-        # Fallback to default cache (Redis/Memcached)
+        # Fallback to default cache (Memcached)
         try:
             cached_data = cache.get(cache_key)
             if cached_data:
                 logger.debug(f"Cache hit (default): {cache_key}")
-                # Store in quick cache for faster subsequent access
                 quick_cache.set(cache_key, cached_data, timeout=300)
                 return self._paginated_response(json.loads(cached_data), request)
         except Exception as e:
             logger.warning(f"Default cache error: {e}")
 
-        # Define table configurations with indexes
+        # Table configurations
         table_configs = [
             {
                 "table": "management_patientcoding",
-                "fields": ["id",
-                           "mrn", "source_key", "source_name", "name",
-                           "ref_bill_code_set_name", "ref_bill_code"
-                           ],
+                "fields": ["id", "mrn", "source_key", "source_name", "name",
+                           "ref_bill_code_set_name", "ref_bill_code"],
                 "filterable": ["mrn"]
             },
             {
@@ -579,51 +576,41 @@ class SQLMRNFilterListAPIView(APIView):
             },
             {
                 "table": "management_patientinformation",
-                "fields": ["id",
-                           "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
+                "fields": ["id", "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
                            "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
                            "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
                            "asa_rating_c", "asa_rating", "patient_class_group",
                            "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
-                           "out_or_dttm", "an_start_datetime", "an_stop_datetime"
-                           ],
+                           "out_or_dttm", "an_start_datetime", "an_stop_datetime"],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientlabs",
-                "fields": ["id",
-                           "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
+                "fields": ["id", "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
                            "observation_value", "measurement_units", "reference_range",
-                           "abnormal_flag", "collection_datetime"
-                           ],
+                           "abnormal_flag", "collection_datetime"],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientmedication",
-                "fields": ["id",
-                           "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
+                "fields": ["id", "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
                            "order_class_nm", "medication_id", "display_name", "medication_nm",
                            "start_date", "end_date", "order_status_nm", "record_type",
                            "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
-                           "med_route_nm"
-                           ],
+                           "med_route_nm"],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientlda",
-                "fields": [
-                    "id", "log_id", "mrn", "description", "properties_display",
-                    "site", "placement_instant", "removal_instant", "flo_meas_name",
-                    "line_group_name"
-                ],
+                "fields": ["id", "log_id", "mrn", "description", "properties_display",
+                           "site", "placement_instant", "removal_instant", "flo_meas_name",
+                           "line_group_name"],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientpostopcomplications",
-                "fields": ["id",
-                           "log_id", "mrn", "element_name", "context_name",
-                           "element_abbr", "smrtdta_elem_value"
-                           ],
+                "fields": ["id", "log_id", "mrn", "element_name", "context_name",
+                           "element_abbr", "smrtdta_elem_value"],
                 "filterable": ["mrn", "log_id"]
             },
             {
@@ -659,16 +646,16 @@ class SQLMRNFilterListAPIView(APIView):
         queries = []
         params = []
 
-        # Optimize query construction
+        # Build queries
         for config in table_configs:
-            if not mrn and not log_id:
-                continue
-
             table = config["table"]
             table_fields = config["fields"]
             filterable = config["filterable"]
 
-            if (mrn and "mrn" not in filterable) or (log_id and "log_id" not in filterable):
+            # Skip tables that require specific filters when those filters are provided
+            if mrn and "mrn" not in filterable:
+                continue
+            if log_id and "log_id" not in filterable and not mrn:
                 continue
 
             select_fields = [
@@ -685,31 +672,33 @@ class SQLMRNFilterListAPIView(APIView):
                 where_clauses.append("log_id = %s")
                 params.append(log_id)
 
-            if not where_clauses:
-                continue
-
-            where_clause = " AND ".join(where_clauses)
+            # If no filters, select all records from the table
+            where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
             query = f"SELECT {select_clause} FROM {table} WHERE {where_clause}"
-            queries.append(f"({query})")
+            queries.append(query)
 
         if not queries:
+            logger.warning("No valid queries generated")
             return self._paginated_response([], request)
 
         # Execute query
         try:
+            final_query = " UNION ALL ".join(queries)
+            logger.debug(f"Executing query: {final_query} with params: {params}")
             with connection.cursor() as cursor:
-                cursor.execute(" UNION ALL ".join(queries), params)
+                cursor.execute(final_query, params)
                 columns = ["model_name"] + all_fields
                 all_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+                logger.debug(f"Retrieved {len(all_data)} records")
         except Exception as e:
             logger.error(f"Database query error: {e}")
             return self._paginated_response([], request)
 
         # Cache results
         try:
-            serialized_data = json.dumps(all_data)
-            cache.set(cache_key, serialized_data, timeout=3600)  # Default cache (Redis/Memcached)
-            quick_cache.set(cache_key, serialized_data, timeout=300)  # Quick cache
+            serialized_data = json.dumps(all_data, default=str)
+            cache.set(cache_key, serialized_data, timeout=3600)
+            quick_cache.set(cache_key, serialized_data, timeout=300)
             logger.debug(f"Cache set: {cache_key}")
         except Exception as e:
             logger.warning(f"Cache set error: {e}")
@@ -720,7 +709,6 @@ class SQLMRNFilterListAPIView(APIView):
         paginator = CustomPagination()
         paginated_data = paginator.paginate_queryset(data, request)
         return paginator.get_paginated_response(paginated_data)
-
 
 
 
