@@ -1,4 +1,3 @@
-import uuid
 
 from django.db import models
 
@@ -88,7 +87,6 @@ class PatientMedication(models.Model):
 
 
 class PatientLDA(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     log_id = models.TextField(default=None, blank=True, null=True)
     mrn = models.TextField(default=None, blank=True, null=True)
     description = models.TextField(default=None, blank=True, null=True)

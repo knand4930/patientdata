@@ -1,11 +1,11 @@
 from django.urls import path
 
-from management.views import FilterAPIDataAPIView, PatientCodingListAPIView, PatientHistoryListAPIView, \
+from management.views import PatientCodingListAPIView, PatientHistoryListAPIView, \
     PatientInformationListAPIView, PatientLabsListAPIView, PatientLDAListAPIView, PatientPostOPComplicationsListAPIView, \
-    PatientProcedureEventsListAPIView, PatientVisitListAPIView, PatientMedicationListAPIView, MRNFilterListAPIView
+    PatientProcedureEventsListAPIView, PatientVisitListAPIView, PatientMedicationListAPIView, MRNFilterListAPIView, \
+    SQLMRNFilterListAPIView
 
 urlpatterns = [
-    path("get/patient/data/", FilterAPIDataAPIView.as_view(), name="FilterAPIDataAPIView"),
     path("get/patient/coding/data/", PatientCodingListAPIView.as_view(), name="PatientCodingListAPIView"),
     path("get/patient/history/data/", PatientHistoryListAPIView.as_view(), name="PatientHistoryListAPIView"),
     path("get/patient/information/data/", PatientInformationListAPIView.as_view(), name="PatientInformationListAPIView"),
@@ -16,4 +16,5 @@ urlpatterns = [
     path("get/patient/visit/data/", PatientVisitListAPIView.as_view(), name="PatientVisitListAPIView"),
     path("get/patient/medication/data/", PatientMedicationListAPIView.as_view(), name="PatientMedicationListAPIView"),
     path("get/mrn/filter/data/", MRNFilterListAPIView.as_view(), name="MRNFilterListAPIView"),
+    path("sql/mrn/filter/data/", SQLMRNFilterListAPIView.as_view(), name="SQLMRNFilterListAPIView"),
 ]
