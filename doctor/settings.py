@@ -64,33 +64,37 @@ INSTALLED_APPS = [
 # Redis with django-redis (pip install django-redis)
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  # Database 1
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': '127.0.0.1:11211',
         'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 20,
-                'retry_on_timeout': True,
-            },
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+            'server_max_value_length': 1024 * 1024 * 1024,  # 10MB max value
+            'no_delay': True,
+            'ignore_exc': True,
         },
-        'KEY_PREFIX': 'medical_data',
-        'TIMEOUT': 900,  # 15 minutes default
+        'KEY_PREFIX': 'medical_api',
+        'TIMEOUT': 3600,  # 1 hour
         'VERSION': 1,
     },
-    # Separate cache for session data
     'sessions': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/2',  # Database 2
+        'LOCATION': 'redis://127.0.0.1:6379/2',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': os.environ.get('REDIS_PASSWORD', None),
         },
         'KEY_PREFIX': 'session',
-        'TIMEOUT': 3600,  # 1 hour for sessions
-    }
+        'TIMEOUT': 7200,  # 2 hours
+    },
+    'quick': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'quick-cache',
+        'TIMEOUT': 300,  # 5 minutes
+        'OPTIONS': {
+            'MAX_ENTRIES': 2000,
+            'CULL_FREQUENCY': 3,
+        },
+    },
 }
-
 # ============================================================================
 # OPTION 2: MEMCACHED CONFIGURATION
 # ============================================================================
