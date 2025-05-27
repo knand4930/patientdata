@@ -1,6 +1,9 @@
+import json
 from itertools import chain
 
 from django.contrib.admin.templatetags.admin_list import pagination
+from django.core import cache
+from django.core.cache import caches
 from django.db import connection
 from django.db.models import Q, CharField, Value
 from django.http import JsonResponse
@@ -207,6 +210,326 @@ class MRNFilterListAPIView(APIView):
 
         return paginator.get_paginated_response(paginated_data)
 
+#
+# class SQLMRNFilterListAPIView(APIView):
+#     permission_classes = (AllowAny,)
+#
+#     def get(self, request, *args, **kwargs):
+#         mrn = request.GET.get("mrn")
+#         log_id = request.GET.get("log_id")
+#
+#         # Define the tables and their relevant fields
+#         table_configs = [
+#             {
+#                 "table": "management_patientcoding",
+#                 "fields": ["id",
+#                     "mrn", "source_key", "source_name", "name",
+#                     "ref_bill_code_set_name", "ref_bill_code"
+#                 ],
+#                 "filterable": ["mrn"]
+#             },
+#             {
+#                 "table": "management_patienthistory",
+#                 "fields": ["id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn"]
+#             },
+#             {
+#                 "table": "management_patientinformation",
+#                 "fields": ["id",
+#                     "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
+#                     "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#                     "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#                     "asa_rating_c", "asa_rating", "patient_class_group",
+#                     "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
+#                     "out_or_dttm", "an_start_datetime", "an_stop_datetime"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlabs",
+#                 "fields": ["id",
+#                     "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
+#                     "observation_value", "measurement_units", "reference_range",
+#                     "abnormal_flag", "collection_datetime"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientmedication",
+#                 "fields": ["id",
+#                     "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
+#                     "order_class_nm", "medication_id", "display_name", "medication_nm",
+#                     "start_date", "end_date", "order_status_nm", "record_type",
+#                     "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
+#                     "med_route_nm"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlda",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "description", "properties_display",
+#                     "site", "placement_instant", "removal_instant", "flo_meas_name",
+#                     "line_group_name"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientpostopcomplications",
+#                 "fields": ["id",
+#                     "log_id", "mrn", "element_name", "context_name",
+#                     "element_abbr", "smrtdta_elem_value"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientprocedureevents",
+#                 "fields": ["id","log_id", "mrn", "event_display_name", "event_time", "note_text"],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientvisit",
+#                 "fields": ["id","log_id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn", "log_id"]
+#             }
+#         ]
+#
+#         # Build the SQL query with UNION ALL
+#         queries = []
+#         params = []
+#         all_fields = [
+#             "id", "mrn", "source_key", "source_name", "name", "ref_bill_code_set_name",
+#             "ref_bill_code", "diagnosis_code", "dx_name", "log_id", "disch_disp_c",
+#             "hosp_admsn_time", "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#             "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#             "asa_rating_c", "asa_rating", "patient_class_group", "patient_class_nm",
+#             "primary_procedure_nm", "in_or_dttm", "out_or_dttm", "an_start_datetime",
+#             "an_stop_datetime", "enc_type_nm", "lab_code", "lab_name", "observation_value",
+#             "measurement_units", "reference_range", "abnormal_flag", "collection_datetime",
+#             "enc_type_c", "ordering_date", "order_class_nm", "medication_id",
+#             "display_name", "medication_nm", "start_date", "end_date", "order_status_nm",
+#             "record_type", "mar_action_nm", "med_action_time", "admin_sig",
+#             "dose_unit_nm", "med_route_nm", "description", "properties_display",
+#             "site", "placement_instant", "removal_instant", "flo_meas_name",
+#             "line_group_name", "element_name", "context_name", "element_abbr",
+#             "smrtdta_elem_value", "event_display_name", "event_time", "note_text"
+#         ]
+#
+#         for config in table_configs:
+#             table = config["table"]
+#             table_fields = config["fields"]
+#             filterable = config["filterable"]
+#
+#             # Build SELECT clause
+#             select_fields = [f"{table}.{f} AS {f}" if f in table_fields else f"NULL AS {f}" for f in all_fields]
+#             select_clause = ", ".join([f"'{table}' AS model_name"] + select_fields)
+#
+#             # Build WHERE clause
+#             where_clauses = []
+#             if mrn and "mrn" in filterable:
+#                 where_clauses.append("mrn = %s")
+#                 params.append(mrn)
+#             if log_id and "log_id" in filterable:
+#                 where_clauses.append("log_id = %s")
+#                 params.append(log_id)
+#
+#             where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
+#             query = f"SELECT {select_clause} FROM {table} WHERE {where_clause}"
+#             queries.append(query)
+#
+#         # Combine queries with UNION ALL
+#         final_query = " UNION ALL ".join(queries)
+#
+#         # Execute the query
+#         with connection.cursor() as cursor:
+#             cursor.execute(final_query, params)
+#             rows = cursor.fetchall()
+#
+#         # Map rows to dictionaries
+#         all_data = []
+#         columns = ["model_name"] + all_fields
+#         for row in rows:
+#             results = dict(zip(columns, row))
+#             all_data.append(results)
+#
+#         # Apply pagination
+#         paginator = CustomPagination()
+#         paginated_data = paginator.paginate_queryset(all_data, request)
+#
+#         return paginator.get_paginated_response(paginated_data)
+#
+
+#
+# class SQLMRNFilterListAPIView(APIView):
+#     permission_classes = (AllowAny,)
+#
+#     def get(self, request, *args, **kwargs):
+#         mrn = request.GET.get("mrn")
+#         log_id = request.GET.get("log_id")
+#
+#         # Generate cache key
+#         cache_key = f"mrn_filter:{mrn}:{log_id}"
+#
+#         # Try to get cached results
+#         cached_data = cache.get(cache_key)
+#         if cached_data:
+#             return self._paginated_response(json.loads(cached_data), request)
+#
+#         # Define table configurations with indexes recommendation
+#         table_configs = [
+#             {
+#                 "table": "management_patientcoding",
+#                 "fields": ["id",
+#                            "mrn", "source_key", "source_name", "name",
+#                            "ref_bill_code_set_name", "ref_bill_code"
+#                            ],
+#                 "filterable": ["mrn"]
+#             },
+#             {
+#                 "table": "management_patienthistory",
+#                 "fields": ["id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn"]
+#             },
+#             {
+#                 "table": "management_patientinformation",
+#                 "fields": ["id",
+#                            "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
+#                            "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#                            "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#                            "asa_rating_c", "asa_rating", "patient_class_group",
+#                            "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
+#                            "out_or_dttm", "an_start_datetime", "an_stop_datetime"
+#                            ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlabs",
+#                 "fields": ["id",
+#                            "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
+#                            "observation_value", "measurement_units", "reference_range",
+#                            "abnormal_flag", "collection_datetime"
+#                            ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientmedication",
+#                 "fields": ["id",
+#                            "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
+#                            "order_class_nm", "medication_id", "display_name", "medication_nm",
+#                            "start_date", "end_date", "order_status_nm", "record_type",
+#                            "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
+#                            "med_route_nm"
+#                            ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlda",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "description", "properties_display",
+#                     "site", "placement_instant", "removal_instant", "flo_meas_name",
+#                     "line_group_name"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientpostopcomplications",
+#                 "fields": ["id",
+#                            "log_id", "mrn", "element_name", "context_name",
+#                            "element_abbr", "smrtdta_elem_value"
+#                            ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientprocedureevents",
+#                 "fields": ["id", "log_id", "mrn", "event_display_name", "event_time", "note_text"],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientvisit",
+#                 "fields": ["id", "log_id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn", "log_id"]
+#             }
+#         ]
+
+#         all_fields = [
+#             "id", "mrn", "source_key", "source_name", "name", "ref_bill_code_set_name",
+#             "ref_bill_code", "diagnosis_code", "dx_name", "log_id", "disch_disp_c",
+#             "hosp_admsn_time", "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#             "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#             "asa_rating_c", "asa_rating", "patient_class_group", "patient_class_nm",
+#             "primary_procedure_nm", "in_or_dttm", "out_or_dttm", "an_start_datetime",
+#             "an_stop_datetime", "enc_type_nm", "lab_code", "lab_name", "observation_value",
+#             "measurement_units", "reference_range", "abnormal_flag", "collection_datetime",
+#             "enc_type_c", "ordering_date", "order_class_nm", "medication_id",
+#             "display_name", "medication_nm", "start_date", "end_date", "order_status_nm",
+#             "record_type", "mar_action_nm", "med_action_time", "admin_sig",
+#             "dose_unit_nm", "med_route_nm", "description", "properties_display",
+#             "site", "placement_instant", "removal_instant", "flo_meas_name",
+#             "line_group_name", "element_name", "context_name", "element_abbr",
+#             "smrtdta_elem_value", "event_display_name", "event_time", "note_text"
+#         ]
+
+#         queries = []
+#         params = []
+#
+#         # Optimize query construction
+#         for config in table_configs:
+#             if not mrn and not log_id:
+#                 continue  # Skip if no filters provided
+#
+#             table = config["table"]
+#             table_fields = config["fields"]
+#             filterable = config["filterable"]
+#
+#             # Only include tables that can be filtered by provided parameters
+#             if (mrn and "mrn" not in filterable) or (log_id and "log_id" not in filterable):
+#                 continue
+#
+#             # Build SELECT clause with minimal fields
+#             select_fields = [
+#                 f"{table}.{f}" if f in table_fields else f"NULL AS {f}"
+#                 for f in all_fields
+#             ]
+#             select_clause = ", ".join([f"'{table}' AS model_name"] + select_fields)
+#
+#             # Build WHERE clause with parameter binding
+#             where_clauses = []
+#             if mrn and "mrn" in filterable:
+#                 where_clauses.append("mrn = %s")
+#                 params.append(mrn)
+#             if log_id and "log_id" in filterable:
+#                 where_clauses.append("log_id = %s")
+#                 params.append(log_id)
+#
+#             if not where_clauses:
+#                 continue
+#
+#             where_clause = " AND ".join(where_clauses)
+#             query = f"SELECT {select_clause} FROM {table} WHERE {where_clause}"
+#             queries.append(f"({query})")
+#
+#         if not queries:
+#             return self._paginated_response([], request)
+#
+#         # Combine queries with UNION ALL
+#         final_query = " UNION ALL ".join(queries)
+#
+#         # Execute query with connection pooling
+#         with connection.cursor() as cursor:
+#             cursor.execute(final_query, params)
+#             columns = ["model_name"] + all_fields
+#             all_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+#
+#         # Cache results (store for 1 hour)
+#         cache.set(cache_key, json.dumps(all_data), timeout=3600)
+#
+#         return self._paginated_response(all_data, request)
+#
+#     def _paginated_response(self, data, request):
+#         paginator = CustomPagination()
+#         paginated_data = paginator.paginate_queryset(data, request)
+#         return paginator.get_paginated_response(paginated_data)
+
 
 class SQLMRNFilterListAPIView(APIView):
     permission_classes = (AllowAny,)
@@ -215,14 +538,38 @@ class SQLMRNFilterListAPIView(APIView):
         mrn = request.GET.get("mrn")
         log_id = request.GET.get("log_id")
 
-        # Define the tables and their relevant fields
+        # Generate cache key
+        cache_key = f"mrn_filter:{mrn}:{log_id}"
+
+        # Try quick cache first (local memory)
+        quick_cache = caches['quick']
+        try:
+            cached_data = quick_cache.get(cache_key)
+            if cached_data:
+                logger.debug(f"Cache hit (quick): {cache_key}")
+                return self._paginated_response(json.loads(cached_data), request)
+        except Exception as e:
+            logger.warning(f"Quick cache error: {e}")
+
+        # Fallback to default cache (Redis/Memcached)
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                logger.debug(f"Cache hit (default): {cache_key}")
+                # Store in quick cache for faster subsequent access
+                quick_cache.set(cache_key, cached_data, timeout=300)
+                return self._paginated_response(json.loads(cached_data), request)
+        except Exception as e:
+            logger.warning(f"Default cache error: {e}")
+
+        # Define table configurations with indexes
         table_configs = [
             {
                 "table": "management_patientcoding",
                 "fields": ["id",
-                    "mrn", "source_key", "source_name", "name",
-                    "ref_bill_code_set_name", "ref_bill_code"
-                ],
+                           "mrn", "source_key", "source_name", "name",
+                           "ref_bill_code_set_name", "ref_bill_code"
+                           ],
                 "filterable": ["mrn"]
             },
             {
@@ -233,33 +580,33 @@ class SQLMRNFilterListAPIView(APIView):
             {
                 "table": "management_patientinformation",
                 "fields": ["id",
-                    "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
-                    "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
-                    "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
-                    "asa_rating_c", "asa_rating", "patient_class_group",
-                    "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
-                    "out_or_dttm", "an_start_datetime", "an_stop_datetime"
-                ],
+                           "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
+                           "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+                           "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+                           "asa_rating_c", "asa_rating", "patient_class_group",
+                           "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
+                           "out_or_dttm", "an_start_datetime", "an_stop_datetime"
+                           ],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientlabs",
                 "fields": ["id",
-                    "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
-                    "observation_value", "measurement_units", "reference_range",
-                    "abnormal_flag", "collection_datetime"
-                ],
+                           "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
+                           "observation_value", "measurement_units", "reference_range",
+                           "abnormal_flag", "collection_datetime"
+                           ],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientmedication",
                 "fields": ["id",
-                    "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
-                    "order_class_nm", "medication_id", "display_name", "medication_nm",
-                    "start_date", "end_date", "order_status_nm", "record_type",
-                    "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
-                    "med_route_nm"
-                ],
+                           "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
+                           "order_class_nm", "medication_id", "display_name", "medication_nm",
+                           "start_date", "end_date", "order_status_nm", "record_type",
+                           "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
+                           "med_route_nm"
+                           ],
                 "filterable": ["mrn", "log_id"]
             },
             {
@@ -274,26 +621,23 @@ class SQLMRNFilterListAPIView(APIView):
             {
                 "table": "management_patientpostopcomplications",
                 "fields": ["id",
-                    "log_id", "mrn", "element_name", "context_name",
-                    "element_abbr", "smrtdta_elem_value"
-                ],
+                           "log_id", "mrn", "element_name", "context_name",
+                           "element_abbr", "smrtdta_elem_value"
+                           ],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientprocedureevents",
-                "fields": ["id","log_id", "mrn", "event_display_name", "event_time", "note_text"],
+                "fields": ["id", "log_id", "mrn", "event_display_name", "event_time", "note_text"],
                 "filterable": ["mrn", "log_id"]
             },
             {
                 "table": "management_patientvisit",
-                "fields": ["id","log_id", "mrn", "diagnosis_code", "dx_name"],
+                "fields": ["id", "log_id", "mrn", "diagnosis_code", "dx_name"],
                 "filterable": ["mrn", "log_id"]
             }
         ]
 
-        # Build the SQL query with UNION ALL
-        queries = []
-        params = []
         all_fields = [
             "id", "mrn", "source_key", "source_name", "name", "ref_bill_code_set_name",
             "ref_bill_code", "diagnosis_code", "dx_name", "log_id", "disch_disp_c",
@@ -312,16 +656,27 @@ class SQLMRNFilterListAPIView(APIView):
             "smrtdta_elem_value", "event_display_name", "event_time", "note_text"
         ]
 
+        queries = []
+        params = []
+
+        # Optimize query construction
         for config in table_configs:
+            if not mrn and not log_id:
+                continue
+
             table = config["table"]
             table_fields = config["fields"]
             filterable = config["filterable"]
 
-            # Build SELECT clause
-            select_fields = [f"{table}.{f} AS {f}" if f in table_fields else f"NULL AS {f}" for f in all_fields]
+            if (mrn and "mrn" not in filterable) or (log_id and "log_id" not in filterable):
+                continue
+
+            select_fields = [
+                f"{table}.{f}" if f in table_fields else f"NULL AS {f}"
+                for f in all_fields
+            ]
             select_clause = ", ".join([f"'{table}' AS model_name"] + select_fields)
 
-            # Build WHERE clause
             where_clauses = []
             if mrn and "mrn" in filterable:
                 where_clauses.append("mrn = %s")
@@ -330,34 +685,565 @@ class SQLMRNFilterListAPIView(APIView):
                 where_clauses.append("log_id = %s")
                 params.append(log_id)
 
-            where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
+            if not where_clauses:
+                continue
+
+            where_clause = " AND ".join(where_clauses)
             query = f"SELECT {select_clause} FROM {table} WHERE {where_clause}"
-            queries.append(query)
+            queries.append(f"({query})")
 
-        # Combine queries with UNION ALL
-        final_query = " UNION ALL ".join(queries)
+        if not queries:
+            return self._paginated_response([], request)
 
-        # Execute the query
-        with connection.cursor() as cursor:
-            cursor.execute(final_query, params)
-            rows = cursor.fetchall()
+        # Execute query
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(" UNION ALL ".join(queries), params)
+                columns = ["model_name"] + all_fields
+                all_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Database query error: {e}")
+            return self._paginated_response([], request)
 
-        # Map rows to dictionaries
-        all_data = []
-        columns = ["model_name"] + all_fields
-        for row in rows:
-            results = dict(zip(columns, row))
-            all_data.append(results)
+        # Cache results
+        try:
+            serialized_data = json.dumps(all_data)
+            cache.set(cache_key, serialized_data, timeout=3600)  # Default cache (Redis/Memcached)
+            quick_cache.set(cache_key, serialized_data, timeout=300)  # Quick cache
+            logger.debug(f"Cache set: {cache_key}")
+        except Exception as e:
+            logger.warning(f"Cache set error: {e}")
 
-        # Apply pagination
+        return self._paginated_response(all_data, request)
+
+    def _paginated_response(self, data, request):
         paginator = CustomPagination()
-        paginated_data = paginator.paginate_queryset(all_data, request)
-
+        paginated_data = paginator.paginate_queryset(data, request)
         return paginator.get_paginated_response(paginated_data)
 
 
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class MRNMergeDataView(APIView):
+    permission_classes = (AllowAny,)
+    """
+    Optimized view to filter and merge patient data by MRN and log_id with pagination
+    """
+
+    def get(self, request):
+        mrn = request.query_params.get('mrn')
+        log_id = request.query_params.get('log_id')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+
+        try:
+            # Use raw SQL for better performance
+            merged_data = self.get_merged_patient_data_optimized(mrn, log_id, page, page_size)
+            total_count = self.get_total_count(mrn, log_id)
+
+            if not merged_data and total_count == 0:
+                return Response(
+                    {"message": "No data found for the given parameters"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Calculate pagination info
+            total_pages = (total_count + page_size - 1) // page_size
+            has_next = page < total_pages
+            has_previous = page > 1
+
+            return Response({
+                "count": total_count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_previous": has_previous,
+                "filters_applied": {
+                    "mrn": mrn,
+                    "log_id": log_id
+                },
+                "results": merged_data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error in MRNMergeDataView: {str(e)}")
+            return Response(
+                {"error": "An error occurred while processing your request"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def get_total_count(self, mrn=None, log_id=None):
+        """Get total count using optimized queries"""
+        total = 0
+
+        # Build WHERE clauses
+        mrn_condition = f"mrn = '{mrn}'" if mrn else "1=1"
+        log_condition = f"log_id = '{log_id}'" if log_id else "1=1"
+
+        with connection.cursor() as cursor:
+            # Count from tables without log_id (only filter by MRN if provided)
+            if not log_id or mrn:  # If no log_id filter or MRN is provided
+                cursor.execute(f"SELECT COUNT(*) FROM management_patientcoding WHERE {mrn_condition}")
+                total += cursor.fetchone()[0]
+
+                cursor.execute(f"SELECT COUNT(*) FROM management_patienthistory WHERE {mrn_condition}")
+                total += cursor.fetchone()[0]
+
+            # Count from tables with log_id
+            if mrn and log_id:
+                condition = f"{mrn_condition} AND {log_condition}"
+            elif mrn:
+                condition = mrn_condition
+            elif log_id:
+                condition = log_condition
+            else:
+                condition = "1=1"
+
+            tables_with_log_id = [
+                'management_patientlabs',
+                'management_patientlda',
+                'management_patientpostcomplications',
+                'management_patientprocedureevents',
+                'management_patientvisit',
+                'management_patientmedication',
+                'management_patientinformation'
+            ]
+
+            for table in tables_with_log_id:
+                cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE {condition}")
+                total += cursor.fetchone()[0]
+
+        return total
+
+    def get_merged_patient_data_optimized(self, mrn=None, log_id=None, page=1, page_size=20):
+        """
+        Optimized method using raw SQL with UNION ALL for better performance
+        """
+        offset = (page - 1) * page_size
+
+        # Build WHERE clauses with SQL injection protection
+        mrn_condition = "mrn = %s" if mrn else "1=1"
+        log_condition = "log_id = %s" if log_id else "1=1"
+
+        queries = []
+        params = []
+
+        # Build condition for tables with log_id
+        if mrn and log_id:
+            log_condition_full = f"{mrn_condition} AND {log_condition}"
+            log_params = [mrn, log_id]
+        elif mrn:
+            log_condition_full = mrn_condition
+            log_params = [mrn]
+        elif log_id:
+            log_condition_full = log_condition
+            log_params = [log_id]
+        else:
+            log_condition_full = "1=1"
+            log_params = []
+
+        # Tables without log_id - only filter by MRN if provided
+        if not log_id or mrn:
+            # PatientCoding table mapping
+            coding_query, coding_params = self.build_optimized_query_for_table(
+                'management_patientcoding',
+                {
+                    'id': 'id', 'mrn': 'mrn', 'source_key': 'source_key',
+                    'source_name': 'source_name', 'name': 'name',
+                    'ref_bill_code_set_name': 'ref_bill_code_set_name',
+                    'ref_bill_code': 'ref_bill_code'
+                },
+                mrn_condition if mrn else "1=1",
+                'coding'
+            )
+            queries.append(coding_query)
+            params.extend(coding_params)
+
+            # PatientHistory table mapping
+            history_query, history_params = self.build_optimized_query_for_table(
+                'management_patienthistory',
+                {
+                    'id': 'id', 'mrn': 'mrn', 'diagnosis_code': 'diagnosis_code',
+                    'dx_name': 'dx_name'
+                },
+                mrn_condition if mrn else "1=1",
+                'history'
+            )
+            queries.append(history_query)
+            params.extend(history_params)
+
+        # PatientLabs table mapping
+        labs_query, labs_params = self.build_optimized_query_for_table(
+            'management_patientlabs',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'enc_type_nm': 'enc_type_nm',
+                'lab_code': 'lab_code', 'lab_name': 'lab_name', 'observation_value': 'observation_value',
+                'measurement_units': 'measurement_units', 'reference_range': 'reference_range',
+                'abnormal_flag': 'abnormal_flag', 'collection_datetime': 'collection_datetime'
+            },
+            log_condition_full,
+            'labs'
+        )
+        queries.append(labs_query)
+        params.extend(labs_params)
+
+        # PatientLDA table mapping
+        lda_query, lda_params = self.build_optimized_query_for_table(
+            'management_patientlda',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'description': 'description',
+                'properties_display': 'properties_display', 'site': 'site',
+                'placement_instant': 'placement_instant', 'removal_instant': 'removal_instant',
+                'flo_meas_name': 'flo_meas_name', 'line_group_name': 'line_group_name'
+            },
+            log_condition_full,
+            'lda'
+        )
+        queries.append(lda_query)
+        params.extend(lda_params)
+
+        # PatientPostOPComplications table mapping
+        complications_query, complications_params = self.build_optimized_query_for_table(
+            'management_patientpostcomplications',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'element_name': 'element_name',
+                'context_name': 'context_name', 'element_abbr': 'element_abbr',
+                'smrtdta_elem_value': 'smrtdta_elem_value'
+            },
+            log_condition_full,
+            'complications'
+        )
+        queries.append(complications_query)
+        params.extend(complications_params)
+
+        # PatientProcedureEvents table mapping
+        procedure_query, procedure_params = self.build_optimized_query_for_table(
+            'management_patientprocedureevents',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'event_display_name': 'event_display_name',
+                'event_time': 'event_time', 'note_text': 'note_text'
+            },
+            log_condition_full,
+            'procedure_events'
+        )
+        queries.append(procedure_query)
+        params.extend(procedure_params)
+
+        # PatientVisit table mapping
+        visit_query, visit_params = self.build_optimized_query_for_table(
+            'management_patientvisit',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'diagnosis_code': 'diagnosis_code',
+                'dx_name': 'dx_name'
+            },
+            log_condition_full,
+            'visit'
+        )
+        queries.append(visit_query)
+        params.extend(visit_params)
+
+        # PatientMedication table mapping
+        medication_query, medication_params = self.build_optimized_query_for_table(
+            'management_patientmedication',
+            {
+                'id': 'id', 'enc_type_c': 'enc_type_c', 'enc_type_nm': 'enc_type_nm',
+                'log_id': 'log_id', 'mrn': 'mrn', 'ordering_date': 'ordering_date',
+                'order_class_nm': 'order_class_nm', 'medication_id': 'medication_id',
+                'display_name': 'display_name', 'medication_nm': 'medication_nm',
+                'start_date': 'start_date', 'end_date': 'end_date', 'order_status_nm': 'order_status_nm',
+                'record_type': 'record_type', 'mar_action_nm': 'mar_action_nm',
+                'med_action_time': 'med_action_time', 'admin_sig': 'admin_sig',
+                'dose_unit_nm': 'dose_unit_nm', 'med_route_nm': 'med_route_nm'
+            },
+            log_condition_full,
+            'medication'
+        )
+        queries.append(medication_query)
+        params.extend(medication_params)
+
+        # PatientInformation table mapping
+        info_query, info_params = self.build_optimized_query_for_table(
+            'management_patientinformation',
+            {
+                'id': 'id', 'log_id': 'log_id', 'mrn': 'mrn', 'disch_disp_c': 'disch_disp_c',
+                'hosp_admsn_time': 'hosp_admsn_time', 'hosp_disch_time': 'hosp_disch_time',
+                'los': 'los', 'icu_admin_flag': 'icu_admin_flag', 'surgery_date': 'surgery_date',
+                'birth_date': 'birth_date', 'height': 'height', 'weight': 'weight', 'sex': 'sex',
+                'primary_anes_type_nm': 'primary_anes_type_nm', 'asa_rating_c': 'asa_rating_c',
+                'asa_rating': 'asa_rating', 'patient_class_group': 'patient_class_group',
+                'patient_class_nm': 'patient_class_nm', 'primary_procedure_nm': 'primary_procedure_nm',
+                'in_or_dttm': 'in_or_dttm', 'out_or_dttm': 'out_or_dttm',
+                'an_start_datetime': 'an_start_datetime', 'an_stop_datetime': 'an_stop_datetime'
+            },
+            log_condition_full,
+            'information'
+        )
+        queries.append(info_query)
+        params.extend(info_params)
+
+        # Combine all queries with UNION ALL
+        final_query = " UNION ALL ".join(queries)
+        final_query += f" ORDER BY id LIMIT %s OFFSET %s"
+        params.extend([page_size, offset])
+
+        results = []
+        with connection.cursor() as cursor:
+            cursor.execute(final_query, params)
+            columns = [col[0] for col in cursor.description]
+            for row in cursor.fetchall():
+                results.append(dict(zip(columns, row)))
+
+        return results
+
+    def build_optimized_query_for_table(self, table_name, fields_mapping, condition, record_type):
+        """
+        Helper method to build optimized query for each table
+        Maps actual table fields to the standardized output format
+        """
+        # Define all possible output fields in the standardized format
+        all_fields = [
+            'id', 'mrn', 'source_key', 'source_name', 'name', 'ref_bill_code_set_name',
+            'ref_bill_code', 'diagnosis_code', 'dx_name', 'log_id', 'disch_disp_c',
+            'hosp_admsn_time', 'hosp_disch_time', 'los', 'icu_admin_flag', 'surgery_date',
+            'birth_date', 'height', 'weight', 'sex', 'primary_anes_type_nm', 'asa_rating_c',
+            'asa_rating', 'patient_class_group', 'patient_class_nm', 'primary_procedure_nm',
+            'in_or_dttm', 'out_or_dttm', 'an_start_datetime', 'an_stop_datetime',
+            'enc_type_nm', 'lab_code', 'lab_name', 'observation_value', 'measurement_units',
+            'reference_range', 'abnormal_flag', 'collection_datetime', 'enc_type_c',
+            'ordering_date', 'order_class_nm', 'medication_id', 'display_name',
+            'medication_nm', 'start_date', 'end_date', 'order_status_nm', 'record_type',
+            'mar_action_nm', 'med_action_time', 'admin_sig', 'dose_unit_nm', 'med_route_nm',
+            'description', 'properties_display', 'site', 'placement_instant', 'removal_instant',
+            'flo_meas_name', 'line_group_name', 'element_name', 'context_name', 'element_abbr',
+            'smrtdta_elem_value', 'event_display_name', 'event_time', 'note_text'
+        ]
+
+        # Build SELECT clause mapping actual fields to standardized names
+        select_parts = []
+        for field in all_fields:
+            if field in fields_mapping:
+                # Use the actual field from the table
+                select_parts.append(f"{fields_mapping[field]} as {field}")
+            else:
+                # Use NULL for fields that don't exist in this table
+                select_parts.append(f"NULL as {field}")
+
+        # Add record type source field
+        select_parts.append(f"'{record_type}' as record_type_source")
+
+        # Build the complete SELECT statement
+        select_clause = ", ".join(select_parts)
+
+        # Build the complete query
+        query = f"""
+            SELECT {select_clause}
+            FROM {table_name}
+            WHERE {condition}
+        """
+
+        # Determine parameters based on condition
+        params = []
+        if condition != "1=1":
+            # Count the number of %s placeholders in the condition
+            param_count = condition.count('%s')
+            if param_count == 1:
+                # Single parameter (either mrn or log_id)
+                if 'mrn' in condition:
+                    params = [self.current_mrn] if hasattr(self, 'current_mrn') else []
+                elif 'log_id' in condition:
+                    params = [self.current_log_id] if hasattr(self, 'current_log_id') else []
+            elif param_count == 2:
+                # Two parameters (both mrn and log_id)
+                params = [self.current_mrn, self.current_log_id] if hasattr(self, 'current_mrn') and hasattr(self,
+                                                                                                             'current_log_id') else []
+
+        return query, params
+
+
+#
+#
+# class SQLMRNFilterListAPIView(APIView):
+#     permission_classes = (AllowAny,)
+#
+#     def get(self, request, *args, **kwargs):
+#         # Extract query parameters
+#         mrn = request.GET.get("mrn")
+#         log_id = request.GET.get("log_id")
+#         diagnosis_code = request.GET.get("diagnosis_code")
+#
+#         # Define the tables and their relevant fields
+#         table_configs = [
+#             {
+#                 "table": "management_patientcoding",
+#                 "fields": [
+#                     "id", "mrn", "source_key", "source_name", "name",
+#                     "ref_bill_code_set_name", "ref_bill_code"
+#                 ],
+#                 "filterable": ["mrn", "diagnosis_code"]
+#             },
+#             {
+#                 "table": "management_patienthistory",
+#                 "fields": ["id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn", "diagnosis_code"]
+#             },
+#             {
+#                 "table": "management_patientinformation",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "disch_disp_c", "disch_disp", "hosp_admsn_time",
+#                     "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#                     "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#                     "asa_rating_c", "asa_rating", "patient_class_group",
+#                     "patient_class_nm", "primary_procedure_nm", "in_or_dttm",
+#                     "out_or_dttm", "an_start_datetime", "an_stop_datetime"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlabs",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "enc_type_nm", "lab_code", "lab_name",
+#                     "observation_value", "measurement_units", "reference_range",
+#                     "abnormal_flag", "collection_datetime"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientmedication",
+#                 "fields": [
+#                     "id", "enc_type_c", "enc_type_nm", "log_id", "mrn", "ordering_date",
+#                     "order_class_nm", "medication_id", "display_name", "medication_nm",
+#                     "start_date", "end_date", "order_status_nm", "record_type",
+#                     "mar_action_nm", "med_action_time", "admin_sig", "dose_unit_nm",
+#                     "med_route_nm"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientlda",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "description", "properties_display",
+#                     "site", "placement_instant", "removal_instant", "flo_meas_name",
+#                     "line_group_name"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientpostopcomplications",
+#                 "fields": [
+#                     "id", "log_id", "mrn", "element_name", "context_name",
+#                     "element_abbr", "smrtdta_elem_value"
+#                 ],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientprocedureevents",
+#                 "fields": ["id", "log_id", "mrn", "event_display_name", "event_time", "note_text"],
+#                 "filterable": ["mrn", "log_id"]
+#             },
+#             {
+#                 "table": "management_patientvisit",
+#                 "fields": ["id", "log_id", "mrn", "diagnosis_code", "dx_name"],
+#                 "filterable": ["mrn", "log_id", "diagnosis_code"]
+#             }
+#         ]
+#
+#         # Define all possible fields for the result
+#         all_fields = [
+#             "id", "mrn", "source_key", "source_name", "name", "ref_bill_code_set_name",
+#             "ref_bill_code", "diagnosis_code", "dx_name", "log_id", "disch_disp_c",
+#             "hosp_admsn_time", "hosp_disch_time", "los", "icu_admin_flag", "surgery_date",
+#             "birth_date", "height", "weight", "sex", "primary_anes_type_nm",
+#             "asa_rating_c", "asa_rating", "patient_class_group", "patient_class_nm",
+#             "primary_procedure_nm", "in_or_dttm", "out_or_dttm", "an_start_datetime",
+#             "an_stop_datetime", "enc_type_nm", "lab_code", "lab_name", "observation_value",
+#             "measurement_units", "reference_range", "abnormal_flag", "collection_datetime",
+#             "enc_type_c", "ordering_date", "order_class_nm", "medication_id",
+#             "display_name", "medication_nm", "start_date", "end_date", "order_status_nm",
+#             "record_type", "mar_action_nm", "med_action_time", "admin_sig",
+#             "dose_unit_nm", "med_route_nm", "description", "properties_display",
+#             "site", "placement_instant", "removal_instant", "flo_meas_name",
+#             "line_group_name", "element_name", "context_name", "element_abbr",
+#             "smrtdta_elem_value", "event_display_name", "event_time", "note_text"
+#         ]
+#
+#         # Build queries based on filters
+#         queries = []
+#         params = []
+#
+#         # Check which filters are provided
+#         filters = {}
+#         if mrn:
+#             filters["mrn"] = mrn
+#         if log_id:
+#             filters["log_id"] = log_id
+#         if diagnosis_code:
+#             filters["diagnosis_code"] = diagnosis_code
+#
+#         for config in table_configs:
+#             table = config["table"]
+#             table_fields = config["fields"]
+#             filterable = config["filterable"]
+#
+#             # Include all tables if no filters are provided, or only tables that support the provided filters
+#             if not filters or any(f in filterable for f in filters):
+#                 # Build SELECT clause with only the fields available in the table
+#                 select_fields = [
+#                     f"{table}.{f}" if f in table_fields else f"NULL AS {f}"
+#                     for f in all_fields
+#                 ]
+#                 select_clause = ", ".join([f"'{table}' AS model_name"] + select_fields)
+#
+#                 # Build WHERE clause
+#                 where_clauses = []
+#                 for filter_name, filter_value in filters.items():
+#                     if filter_name in filterable:
+#                         # Use case-insensitive filtering for string fields
+#                         if filter_name in ["mrn", "diagnosis_code"]:
+#                             where_clauses.append(f"LOWER({filter_name}) = LOWER(%s)")
+#                         else:
+#                             where_clauses.append(f"{filter_name} = %s")
+#                         params.append(filter_value)
+#
+#                 where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
+#                 query = f"SELECT {select_clause} FROM {table} WHERE {where_clause}"
+#                 queries.append(query)
+#
+#         # Handle case where no queries are generated
+#         if not queries:
+#             return Response({"detail": "No tables support the provided filters"}, status=400)
+#
+#         # Combine queries with UNION ALL
+#         final_query = " UNION ALL ".join(queries)
+#
+#         # Execute the query
+#         try:
+#             with connection.cursor() as cursor:
+#                 cursor.execute(final_query, params)
+#                 rows = cursor.fetchall()
+#                 print(f"Rows fetched: {len(rows)}")  # Debug row count
+#         except Exception as e:
+#             print(f"Query error: {str(e)}")  # Debug query error
+#             return Response({"detail": f"Query execution failed: {str(e)}"}, status=500)
+#
+#         # Map rows to dictionaries
+#         all_data = []
+#         columns = ["model_name"] + all_fields
+#         for row in rows:
+#             results = dict(zip(columns, row))
+#             all_data.append(results)
+#
+#         # Apply pagination
+#         paginator = CustomPagination()
+#         paginated_data = paginator.paginate_queryset(all_data, request)
+#
+#         return paginator.get_paginated_response(paginated_data)
+#
 
 def dictfetchall(cursor):
     """Return all rows from a cursor as a dict"""

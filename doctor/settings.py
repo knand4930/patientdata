@@ -59,7 +59,98 @@ INSTALLED_APPS = [
 
 ]
 
+
+
+# Redis with django-redis (pip install django-redis)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Database 1
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 20,
+                'retry_on_timeout': True,
+            },
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+        },
+        'KEY_PREFIX': 'medical_data',
+        'TIMEOUT': 900,  # 15 minutes default
+        'VERSION': 1,
+    },
+    # Separate cache for session data
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/2',  # Database 2
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'session',
+        'TIMEOUT': 3600,  # 1 hour for sessions
+    }
+}
+
+# ============================================================================
+# OPTION 2: MEMCACHED CONFIGURATION
+# ============================================================================
+
+# Memcached with python-memcached (pip install python-memcached)
+CACHES_MEMCACHED = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': [
+            '127.0.0.1:11211',
+            # '127.0.0.1:11212',  # Multiple servers for redundancy
+        ],
+        'OPTIONS': {
+            'server_max_value_length': 1024 * 1024 * 10,  # 10MB max value
+        },
+        'KEY_PREFIX': 'medical_data',
+        'TIMEOUT': 900,
+        'VERSION': 1,
+    }
+}
+
+# ============================================================================
+# OPTION 3: MULTI-TIER CACHING (Best Performance)
+# ============================================================================
+
+CACHES_MULTI_TIER = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {'max_connections': 20},
+        },
+        'KEY_PREFIX': 'medical_primary',
+        'TIMEOUT': 900,
+    },
+    'quick': {
+        # In-memory cache for frequently accessed small data
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'quick-cache',
+        'TIMEOUT': 300,  # 5 minutes
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    },
+    'persistent': {
+        # Database cache for data that needs persistence
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+        'TIMEOUT': 3600 * 24,  # 24 hours
+    }
+}
+
+# ============================================================================
+# CACHE MIDDLEWARE CONFIGURATION
+# ============================================================================
+
+
 MIDDLEWARE = [
+    'django.middleware.cache.UpdateCacheMiddleware',  # Must be first
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -68,6 +159,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',  # Must be last
+
 ]
 
 ROOT_URLCONF = 'doctor.urls'
@@ -114,6 +207,25 @@ POSTGRES_USER= os.environ.get('POSTGRES_USER'),
 POSTGRES_PASSWORD= os.environ.get('POSTGRES_PASSWORD'),
 POSTGRES_HOST= os.environ.get('POSTGRES_HOST', "localhost"),
 POSTGRES_PORT= os.environ.get('POSTGRES_PORT', 5432),
+
+
+# Cache middleware settings
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 600  # 10 minutes
+CACHE_MIDDLEWARE_KEY_PREFIX = 'page_cache'
+
+# ============================================================================
+# SESSION CONFIGURATION
+# ============================================================================
+
+# Use Redis for sessions (if using Redis)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'  # or 'default' if single cache
+SESSION_COOKIE_AGE = 3600  # 1 hour
+
+# ============================================================================
+# OPTIMIZED API VIEW WITH MULTI-CACHE STRATEGY
+# =====================================================
 
 
 # Password validation

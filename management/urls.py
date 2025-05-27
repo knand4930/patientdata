@@ -3,7 +3,7 @@ from django.urls import path
 from management.views import PatientCodingListAPIView, PatientHistoryListAPIView, \
     PatientInformationListAPIView, PatientLabsListAPIView, PatientLDAListAPIView, PatientPostOPComplicationsListAPIView, \
     PatientProcedureEventsListAPIView, PatientVisitListAPIView, PatientMedicationListAPIView, MRNFilterListAPIView, \
-    SQLMRNFilterListAPIView
+    SQLMRNFilterListAPIView, MRNMergeDataView
 
 urlpatterns = [
     path("get/patient/coding/data/", PatientCodingListAPIView.as_view(), name="PatientCodingListAPIView"),
@@ -17,4 +17,5 @@ urlpatterns = [
     path("get/patient/medication/data/", PatientMedicationListAPIView.as_view(), name="PatientMedicationListAPIView"),
     path("get/mrn/filter/data/", MRNFilterListAPIView.as_view(), name="MRNFilterListAPIView"),
     path("sql/mrn/filter/data/", SQLMRNFilterListAPIView.as_view(), name="SQLMRNFilterListAPIView"),
+    path("mrn/filter/data/", MRNMergeDataView.as_view(), name="MRNMergeDataView"),
 ]

@@ -25,33 +25,6 @@ class PatientHistory(models.Model):
 
 
 
-class PatientInformation(models.Model):
-    log_id = models.TextField(default=None, blank=True, null=True)
-    mrn = models.TextField(default=None, blank=True, null=True)
-    disch_disp_c = models.TextField(default=None, blank=True, null=True)
-    disch_disp = models.TextField(default=None, blank=True, null=True)
-    hosp_admsn_time = models.TextField(default=None, blank=True, null=True)
-    hosp_disch_time = models.TextField(default=None, blank=True, null=True)
-    los = models.TextField(default=None, blank=True, null=True)
-    icu_admin_flag = models.TextField(default=None, blank=True, null=True)
-    surgery_date = models.TextField(default=None, blank=True, null=True)
-    birth_date = models.TextField(default=None, blank=True, null=True)
-    height = models.TextField(default=None, blank=True, null=True)
-    weight = models.TextField(default=None, blank=True, null=True)
-    sex = models.TextField(default=None, blank=True, null=True)
-    primary_anes_type_nm = models.TextField(default=None, blank=True, null=True)
-    asa_rating_c = models.TextField(default=None, blank=True, null=True)
-    asa_rating = models.TextField(default=None, blank=True, null=True)
-    patient_class_group = models.TextField(default=None, blank=True, null=True)
-    patient_class_nm = models.TextField(default=None, blank=True, null=True)
-    primary_procedure_nm = models.TextField(default=None, blank=True, null=True)
-    in_or_dttm = models.TextField(default=None, blank=True, null=True)
-    out_or_dttm = models.TextField(default=None, blank=True, null=True)
-    an_start_datetime = models.TextField(default=None, blank=True, null=True)
-    an_stop_datetime = models.TextField(default=None, blank=True, null=True)
-
-
-
 class PatientLabs(models.Model):
     log_id = models.TextField(default=None, blank=True, null=True)
     mrn = models.TextField(default=None, blank=True, null=True)
@@ -63,27 +36,6 @@ class PatientLabs(models.Model):
     reference_range = models.TextField(default=None, blank=True, null=True)
     abnormal_flag = models.TextField(default=None, blank=True, null=True)
     collection_datetime = models.TextField(default=None, blank=True, null=True)
-
-
-class PatientMedication(models.Model):
-    enc_type_c = models.TextField(default=None, blank=True, null=True)
-    enc_type_nm = models.TextField(default=None, blank=True, null=True)
-    log_id = models.TextField(default=None, blank=True, null=True)
-    mrn = models.TextField(default=None, blank=True, null=True)
-    ordering_date = models.TextField(default=None, blank=True, null=True)
-    order_class_nm = models.TextField(default=None, blank=True, null=True)
-    medication_id = models.TextField(default=None, blank=True, null=True)
-    display_name = models.TextField(default=None, blank=True, null=True)
-    medication_nm = models.TextField(default=None, blank=True, null=True)
-    start_date = models.TextField(default=None, blank=True, null=True)
-    end_date = models.TextField(default=None, blank=True, null=True)
-    order_status_nm = models.TextField(default=None, blank=True, null=True)
-    record_type = models.TextField(default=None, blank=True, null=True)
-    mar_action_nm = models.TextField(default=None, blank=True, null=True)
-    med_action_time = models.TextField(default=None, blank=True, null=True)
-    admin_sig = models.TextField(default=None, blank=True, null=True)
-    dose_unit_nm = models.TextField(default=None, blank=True, null=True)
-    med_route_nm = models.TextField(default=None, blank=True, null=True)
 
 
 class PatientLDA(models.Model):
@@ -119,3 +71,51 @@ class PatientVisit(models.Model):
     mrn = models.TextField(default=None, blank=True, null=True)
     diagnosis_code = models.TextField(default=None, blank=True, null=True)
     dx_name = models.TextField(default=None, blank=True, null=True)
+
+
+class PatientMedication(models.Model):
+    enc_type_c = models.TextField(default=None, blank=True, null=True)
+    enc_type_nm = models.TextField(default=None, blank=True, null=True)
+    log_id = models.TextField(default=None, blank=True, null=True)
+    mrn = models.TextField(default=None, blank=True, null=True)
+    ordering_date = models.TextField(default=None, blank=True, null=True)
+    order_class_nm = models.TextField(default=None, blank=True, null=True)
+    medication_id = models.TextField(default=None, blank=True, null=True)
+    display_name = models.TextField(default=None, blank=True, null=True)
+    medication_nm = models.TextField(default=None, blank=True, null=True)
+    start_date = models.TextField(default=None, blank=True, null=True)
+    end_date = models.TextField(default=None, blank=True, null=True)
+    order_status_nm = models.TextField(default=None, blank=True, null=True)
+    record_type = models.TextField(default=None, blank=True, null=True)
+    mar_action_nm = models.TextField(default=None, blank=True, null=True)
+    med_action_time = models.TextField(default=None, blank=True, null=True)
+    admin_sig = models.TextField(default=None, blank=True, null=True)
+    dose_unit_nm = models.TextField(default=None, blank=True, null=True)
+    med_route_nm = models.TextField(default=None, blank=True, null=True)
+
+
+
+class PatientInformation(models.Model):
+    log_id = models.TextField(default=None, blank=True, null=True)
+    mrn = models.TextField(default=None, blank=True, null=True)
+    disch_disp_c = models.TextField(default=None, blank=True, null=True)
+    disch_disp = models.TextField(default=None, blank=True, null=True)
+    hosp_admsn_time = models.TextField(default=None, blank=True, null=True)
+    hosp_disch_time = models.TextField(default=None, blank=True, null=True)
+    los = models.TextField(default=None, blank=True, null=True)
+    icu_admin_flag = models.TextField(default=None, blank=True, null=True)
+    surgery_date = models.TextField(default=None, blank=True, null=True)
+    birth_date = models.TextField(default=None, blank=True, null=True)
+    height = models.TextField(default=None, blank=True, null=True)
+    weight = models.TextField(default=None, blank=True, null=True)
+    sex = models.TextField(default=None, blank=True, null=True)
+    primary_anes_type_nm = models.TextField(default=None, blank=True, null=True)
+    asa_rating_c = models.TextField(default=None, blank=True, null=True)
+    asa_rating = models.TextField(default=None, blank=True, null=True)
+    patient_class_group = models.TextField(default=None, blank=True, null=True)
+    patient_class_nm = models.TextField(default=None, blank=True, null=True)
+    primary_procedure_nm = models.TextField(default=None, blank=True, null=True)
+    in_or_dttm = models.TextField(default=None, blank=True, null=True)
+    out_or_dttm = models.TextField(default=None, blank=True, null=True)
+    an_start_datetime = models.TextField(default=None, blank=True, null=True)
+    an_stop_datetime = models.TextField(default=None, blank=True, null=True)
