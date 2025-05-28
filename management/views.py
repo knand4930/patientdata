@@ -17,7 +17,7 @@ from .filter import PatientCodingFilterSet, PatientProcedureEventsFilterSet, Pat
     PatientPostOPComplicationsFilterSet, PatientLDAFilterSet, PatientLabsFilterSet, PatientInformationFilterSet, \
     PatientHistoryFilterSet, PatientMedicationFilterSet
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication, MRNMergeData)
 from .serializer import PatientCodingSerializer, PatientHistorySerializer, PatientInformationSerializer, \
     PatientLabsSerializer, PatientLDASerializer, PatientPostOPComplicationsSerializer, PatientProcedureEventsSerializer, \
     PatientVisitSerializer, PatientMedicationSerializer, MRNMergeDataSerializer
@@ -118,7 +118,7 @@ class MRNFilterListAPIView(APIView):
             PatientProcedureEvents, PatientVisit
         ]
 
-        all_data = []
+        # all_data = []
         for model in instance_models:
             filters = Q()
             model_fields = [f.name for f in model._meta.get_fields()]
@@ -133,7 +133,7 @@ class MRNFilterListAPIView(APIView):
             for obj in queryset:
                 results = {
                     "model_name": model.__name__,
-                    "id": getattr(obj, "id", None),
+                    "models_info": getattr(obj, "id", None),
                     "mrn": getattr(obj, "mrn", None),
                     "source_key": getattr(obj, "source_key", None),
                     "source_name": getattr(obj, "source_name", None),
@@ -201,9 +201,12 @@ class MRNFilterListAPIView(APIView):
                     "event_time": getattr(obj, "event_time", None),
                     "note_text": getattr(obj, "note_text", None),
                 }
+                if MRNMergeData.objects.filter(model_name=results["model_name"],models_info=results["models_info"],mrn=results["mrn"]):
+                    return
 
-                all_data.append(results)
+                data_obj = MRNMergeData.objects.create(**results)
 
+        all_data = MRNMergeData.objects.filter()
         serializer = MRNMergeDataSerializer(all_data, many=True)
         paginator = CustomPagination()
         paginated_data = paginator.paginate_queryset(serializer.data, request)

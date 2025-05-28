@@ -334,7 +334,7 @@ DJOSER = {
     "SEND_ACTIVATION_EMAIL": True,
     'TOKEN_MODEL': None,
     "SERIALIZERS": {
-        "user_create": "account.serializers.UserCreateSerializer",  # custom serializer
+        "user_create": "account.serializer.UserCreateSerializer",  # custom serializer
         "user": "djoser.serializers.UserSerializer",
         "current_user": "djoser.serializers.UserSerializer",
         "user_delete": "djoser.serializers.UserSerializer",

@@ -3,7 +3,7 @@ from import_export import resources
 from import_export.admin import ExportMixin, ExportActionMixin
 
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication, MRNMergeData)
 
 # Register your models here.
 
@@ -95,3 +95,6 @@ class PatientMedicationAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = PatientMedicationResource
     list_display = ("id", "log_id", "mrn", "ordering_date", "display_name")
 admin.site.register(PatientMedication, PatientMedicationAdmin)
+
+
+admin.site.register(MRNMergeData)
