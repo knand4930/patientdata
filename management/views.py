@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 
 from .filter import PatientCodingFilterSet, PatientProcedureEventsFilterSet, PatientVisitFilterSet, \
     PatientPostOPComplicationsFilterSet, PatientLDAFilterSet, PatientLabsFilterSet, PatientInformationFilterSet, \
-    PatientHistoryFilterSet, PatientMedicationFilterSet
+    PatientHistoryFilterSet, PatientMedicationFilterSet, MRNMergeDataFilterSet
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
                      PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication, MRNMergeData)
 from .serializer import PatientCodingSerializer, PatientHistorySerializer, PatientInformationSerializer, \
@@ -220,7 +220,7 @@ class MRNFilterListAPIView(ListAPIView):
     serializer_class = MRNMergeDataSerializer
     filter_backends = [DjangoFilterBackend]
     pagination_class = CustomPagination
-    filterset_class = PatientMedicationFilterSet
+    filterset_class = MRNMergeDataFilterSet
 
 
 # class MRNFilterListAPIView(APIView):
