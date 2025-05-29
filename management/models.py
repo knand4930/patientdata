@@ -197,6 +197,10 @@ class MRNMergeData(models.Model):
         db_table = "management_mrnmergedata"
         verbose_name = "MRN Merge Data"
         verbose_name_plural = "MRN Merge Data"
+        indexes = [
+            models.Index(fields=['mrn']),
+            models.Index(fields=['log_id']),
+        ]
 
     def __str__(self):
         return f"MRNMergeData(id={self.id}, mrn={self.mrn})"
