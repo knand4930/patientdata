@@ -1,5 +1,5 @@
 from .models import (PatientCoding, PatientHistory, PatientInformation, PatientLabs, PatientLDA,
-                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication)
+                     PatientPostOPComplications, PatientProcedureEvents, PatientVisit, PatientMedication, MRNMergeData)
 import django_filters
 
 
