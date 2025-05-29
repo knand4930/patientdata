@@ -134,3 +134,8 @@ class MRNMergeDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = MRNMergeData
         fields = "__all__"
+
+# class MRNMergeDataSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = MRNMergeData
+#         fields = ['id', 'mrn', 'log_id', 'some_other_important_field']

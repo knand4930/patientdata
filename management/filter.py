@@ -18,9 +18,10 @@ class PatientHistoryFilterSet(django_filters.FilterSet):
 class PatientInformationFilterSet(django_filters.FilterSet):
     mrn = django_filters.CharFilter(field_name="mrn")
     log_id = django_filters.CharFilter(field_name="log_id")
+    sex = django_filters.CharFilter(field_name="sex")
     class Meta:
         model = PatientInformation
-        fields = ["mrn", "log_id"]
+        fields = ["mrn", "log_id", "sex"]
 
 class PatientLabsFilterSet(django_filters.FilterSet):
     mrn = django_filters.CharFilter(field_name="mrn")
@@ -62,4 +63,12 @@ class PatientMedicationFilterSet(django_filters.FilterSet):
     log_id = django_filters.CharFilter(field_name="log_id")
     class Meta:
         model = PatientMedication
+        fields = ["mrn", "log_id"]
+
+
+class MRNMergeDataFilterSet(django_filters.FilterSet):
+    mrn = django_filters.CharFilter(field_name="mrn")
+    log_id = django_filters.CharFilter(field_name="log_id")
+    class Meta:
+        model = MRNMergeData
         fields = ["mrn", "log_id"]
