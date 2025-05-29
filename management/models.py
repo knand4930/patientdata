@@ -125,7 +125,7 @@ class MRNMergeData(models.Model):
     id = models.BigAutoField(primary_key=True)
     model_name = models.TextField(null=True, blank=True)
     models_info = models.TextField(null=True, blank=True)
-    mrn = models.TextField(null=True, blank=True, db_index=True)
+    mrn = models.TextField(null=True, blank=True)
     source_key = models.TextField(null=True, blank=True)
     source_name = models.TextField(null=True, blank=True)
     name = models.TextField(null=True, blank=True)
@@ -133,7 +133,7 @@ class MRNMergeData(models.Model):
     ref_bill_code = models.TextField(null=True, blank=True)
     diagnosis_code = models.TextField(null=True, blank=True)
     dx_name = models.TextField(null=True, blank=True)
-    log_id = models.TextField(null=True, blank=True, db_index=True)
+    log_id = models.TextField(null=True, blank=True)
     enc_type_nm = models.TextField(null=True, blank=True)
     lab_code = models.TextField(null=True, blank=True)
     lab_name = models.TextField(null=True, blank=True)
@@ -197,10 +197,10 @@ class MRNMergeData(models.Model):
         db_table = "management_mrnmergedata"
         verbose_name = "MRN Merge Data"
         verbose_name_plural = "MRN Merge Data"
-        indexes = [
-            models.Index(fields=['mrn']),
-            models.Index(fields=['log_id']),
-        ]
+        # indexes = [
+        #     models.Index(fields=['mrn']),
+        #     models.Index(fields=['log_id']),
+        # ]
 
     def __str__(self):
         return f"MRNMergeData(id={self.id}, mrn={self.mrn})"
