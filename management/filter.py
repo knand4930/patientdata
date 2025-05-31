@@ -68,8 +68,10 @@ class PatientMedicationFilterSet(django_filters.FilterSet):
 
 class MRNMergeDataFilterSet(django_filters.FilterSet):
     mrn = django_filters.CharFilter(field_name="mrn", lookup_expr="iexact")
-    log_id = django_filters.CharFilter(field_name="log_id", lookup_expr="iexact")
+    log_id = django_filters.CharFilter(method='filter_log_id')
 
+    def filter_log_id(self, queryset, name, value):
+        return queryset.filter(**{f"{name}__iexact": value}).exclude(log_id__isnull=True)
 
     class Meta:
         model = MRNMergeData
